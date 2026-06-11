@@ -52,5 +52,5 @@ jobs:
       - name: Build eval dataset
         run: python eval/build_dataset.py
 
-      - name: Run evaluation (CI gate: >=75% accuracy)
+      - name: Run evaluation
         run: python eval/run_eval.py
