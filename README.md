@@ -1,5 +1,7 @@
 # AI Incident Investigator
 
+[![CI](https://github.com/abheesh-03/AI-Incident-Investigator-/actions/workflows/ci.yml/badge.svg)](https://github.com/abheesh-03/AI-Incident-Investigator-/actions/workflows/ci.yml)
+
 An AI-powered backend service that automatically investigates production
 incidents by analyzing logs, metrics, and deployment history — and delivers
 structured root cause hypotheses in under 60 seconds.
