@@ -1,0 +1,38 @@
+{
+  "title": "AI Incident Investigator",
+  "uid": "ai-incident-investigator",
+  "schemaVersion": 38,
+  "version": 1,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Investigations completed",
+      "targets": [{"expr": "sum(investigations_total{status=\"completed\"})"}],
+      "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4}
+    },
+    {
+      "type": "stat",
+      "title": "Investigations failed",
+      "targets": [{"expr": "sum(investigations_total{status=\"failed\"})"}],
+      "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4}
+    },
+    {
+      "type": "timeseries",
+      "title": "Investigation duration (p95)",
+      "targets": [{"expr": "histogram_quantile(0.95, sum(rate(investigation_duration_seconds_bucket[5m])) by (le))"}],
+      "gridPos": {"x": 0, "y": 4, "w": 12, "h": 8}
+    },
+    {
+      "type": "timeseries",
+      "title": "Root cause confidence distribution",
+      "targets": [{"expr": "histogram_quantile(0.5, sum(rate(root_cause_confidence_bucket[5m])) by (le))"}],
+      "gridPos": {"x": 0, "y": 12, "w": 12, "h": 8}
+    },
+    {
+      "type": "stat",
+      "title": "Eval accuracy",
+      "targets": [{"expr": "eval_accuracy"}],
+      "gridPos": {"x": 12, "y": 0, "w": 6, "h": 4}
+    }
+  ]
+}
