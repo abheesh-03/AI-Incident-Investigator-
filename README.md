@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/abheesh-03/AI-Incident-Investigator-/actions/workflows/ci.yml/badge.svg)](https://github.com/abheesh-03/AI-Incident-Investigator-/actions/workflows/ci.yml)
 
+**Live demo:** <https://ai-incident-investigator-production.up.railway.app> ([`/health`](https://ai-incident-investigator-production.up.railway.app/health) · [`/metrics`](https://ai-incident-investigator-production.up.railway.app/metrics) · [`/docs`](https://ai-incident-investigator-production.up.railway.app/docs))
+
 An AI-powered backend service that automatically investigates production
 incidents by analyzing logs, metrics, and deployment history — and delivers
 structured root cause hypotheses in under 60 seconds.
