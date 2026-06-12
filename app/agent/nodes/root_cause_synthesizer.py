@@ -11,7 +11,24 @@ from app.core.metrics import agent_node_duration_seconds
 
 NODE = "root_cause_synthesizer"
 
-PROMPT = """You are producing the final root-cause hypothesis for an incident.
+PROMPT = """You are producing the final root-cause hypothesis for a production incident.
+
+Pick the single best matching root_cause_category from this fixed list. Use the
+definitions strictly — they are mutually exclusive:
+
+- db_pool_exhaustion: the DATABASE connection pool ran out of connections, or
+  the application is waiting on DB connections. Signals: "connection pool",
+  "too many connections", "pool_size", DB wait time spike.
+- memory_leak: the PROCESS exhausted memory or was OOMKilled. Signals:
+  "OutOfMemoryError", "OOMKilled", heap exhaustion, RSS growth.
+- timeout_cascade: an UPSTREAM/INTERNAL service slowed down and timeouts
+  cascaded. Signals: 504 from an internal service, "deadline exceeded calling
+  X", request_duration_p95 spike on internal calls. NOT for third-party APIs.
+- misconfiguration: a BAD CONFIG/ENV var was deployed. Signals: "config
+  error", "missing env var", "invalid feature flag", malformed config.
+- dependency_failure: a THIRD-PARTY/EXTERNAL provider failed (Stripe, DNS,
+  TLS, external 503). Signals: "stripe.error", "dns lookup", "TLS handshake",
+  downstream provider 5xx.
 
 Log analysis: {log_analysis}
 Metric analysis: {metric_analysis}
@@ -20,10 +37,10 @@ Deployments in window: {deployments}
 Most similar past postmortems (retrieved via RAG):
 {postmortems}
 
-Reply with strict JSON only:
+Reply with STRICT JSON only — no prose, no markdown fences:
 {{
   "root_cause": "concise 1-sentence root cause",
-  "root_cause_category": "one of: db_pool_exhaustion, memory_leak, timeout_cascade, misconfiguration, dependency_failure",
+  "root_cause_category": "<exact string from the list above>",
   "confidence": 0.0,
   "triggered_by": "what triggered it (e.g. deployment vX.Y.Z at HH:MM)",
   "evidence": ["bullet 1", "bullet 2", "bullet 3"],
@@ -76,11 +93,13 @@ def make_synthesizer_node(db: Session):
         raw = call_llm(prompt, node=NODE)
         parsed = extract_json(raw) or {}
 
-        category = parsed.get("root_cause_category", "misconfiguration")
+        # When the LLM fails to return parseable JSON or nominates a category
+        # outside the allowed enum, bias toward the closest RAG postmortem —
+        # the embedding space is the most reliable category signal we have.
+        rag_category = rag_hits[0]["root_cause_category"] if rag_hits else "misconfiguration"
+        category = parsed.get("root_cause_category", "")
         if category not in VALID_CATEGORIES:
-            # If LLM nominated an unknown bucket, bias toward the most similar
-            # past postmortem's category.
-            category = rag_hits[0]["root_cause_category"] if rag_hits else "misconfiguration"
+            category = rag_category
 
         confidence = float(parsed.get("confidence", metric_analysis.get("confidence_hint", 0.6)))
         confidence = max(0.0, min(1.0, confidence))

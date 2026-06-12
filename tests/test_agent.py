@@ -62,9 +62,12 @@ def test_graph_runs_end_to_end() -> None:
 
 
 def test_heuristic_llm_categorizes_db_pool() -> None:
-    from app.core.llm import call_llm, extract_json
+    # Exercises the deterministic fallback directly so it stays meaningful
+    # even when ANTHROPIC_API_KEY is set (real Claude wouldn't categorize a
+    # bare keyword string into our enum without the full agent prompt).
+    from app.core.llm import _heuristic_response, extract_json
 
     prompt = "Many logs say: DB connection pool exhausted, too many connections, pool_size"
-    raw = call_llm(prompt, node="test")
+    raw = _heuristic_response(prompt)
     parsed = extract_json(raw)
     assert parsed.get("root_cause_category") == "db_pool_exhaustion"
