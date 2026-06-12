@@ -76,11 +76,13 @@ def make_synthesizer_node(db: Session):
         raw = call_llm(prompt, node=NODE)
         parsed = extract_json(raw) or {}
 
-        category = parsed.get("root_cause_category", "misconfiguration")
+        # When the LLM fails to return parseable JSON or nominates a category
+        # outside the allowed enum, bias toward the closest RAG postmortem —
+        # the embedding space is the most reliable category signal we have.
+        rag_category = rag_hits[0]["root_cause_category"] if rag_hits else "misconfiguration"
+        category = parsed.get("root_cause_category", "")
         if category not in VALID_CATEGORIES:
-            # If LLM nominated an unknown bucket, bias toward the most similar
-            # past postmortem's category.
-            category = rag_hits[0]["root_cause_category"] if rag_hits else "misconfiguration"
+            category = rag_category
 
         confidence = float(parsed.get("confidence", metric_analysis.get("confidence_hint", 0.6)))
         confidence = max(0.0, min(1.0, confidence))

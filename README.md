@@ -149,6 +149,36 @@ bearer JWT. Rate limiting is applied per token.
 
 ---
 
+## Deployment (Railway)
+
+The repo includes `railway.json` and a Dockerfile that runs migrations on
+startup, so deploying is a few clicks:
+
+1. Create a Railway project from this GitHub repo (Railway auto-detects the
+   Dockerfile and `railway.json`).
+2. Add a **Postgres + pgvector** plugin to the project (Railway's
+   "PostgreSQL" template includes pgvector — confirm via
+   `CREATE EXTENSION vector;`).
+3. In the API service's variables, set:
+   - `DATABASE_URL` → reference the Postgres plugin's `DATABASE_URL`
+     and prefix it with `postgresql+psycopg://` (Railway gives you
+     `postgresql://...`; psycopg3 needs the explicit driver).
+   - `JWT_SECRET` → any long random string.
+   - `ANTHROPIC_API_KEY` → your Anthropic key.
+   - `LLM_MODEL` → optional, defaults to `claude-haiku-4-5-20251001`.
+4. Railway runs `alembic upgrade head` on each deploy, then starts uvicorn
+   on `$PORT`. Health check hits `/health`.
+5. Once the deploy is green, seed historical postmortems and (optionally)
+   synthetic incidents:
+
+   ```bash
+   railway run python scripts/seed_incidents.py
+   ```
+
+The same recipe works on Render / Fly.io — the Dockerfile is portable.
+
+---
+
 ## Running Locally
 
 ### With Docker (recommended)
