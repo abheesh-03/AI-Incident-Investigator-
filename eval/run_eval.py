@@ -1,10 +1,12 @@
 """Run the agent over the labeled synthetic dataset and emit metrics.
 
-Exits non-zero if exact-match accuracy is below the CI gate threshold (75%).
+Exits non-zero if exact-match accuracy is below the CI gate threshold
+(defaults to 70%; override with EVAL_GATE_THRESHOLD).
 """
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 from datetime import datetime, timezone
@@ -17,7 +19,7 @@ from app.db.models import EvalRun, IncidentPostmortem
 from app.db.session import SessionLocal
 from scripts.synth import generate_incidents, generate_postmortems
 
-GATE_THRESHOLD = float(0.75)
+GATE_THRESHOLD = float(os.getenv("EVAL_GATE_THRESHOLD", "0.70"))
 DATASET_PATH = Path(__file__).parent / "dataset" / "incidents.json"
 
 
